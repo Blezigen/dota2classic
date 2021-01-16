@@ -1,12 +1,14 @@
-import { action, observable, observe } from "mobx";
+import {action, observable, observe} from "mobx";
 import io from "socket.io-client";
-import { MatchmakingMode } from "../util/matchmaking-mode";
-import { Steam } from "./Steam";
+import {MatchmakingMode} from "../util/matchmaking-mode";
+import {Steam} from "./Steam";
 import Settings from "./Settings";
-import { ipcRenderer, remote } from "electron";
+import {ipcRenderer, remote} from "electron";
 import * as path from "path";
 //@ts-ignore
 import matchSound from "../../../static/match.mp3";
+// @ts-ignore
+import necessaryAcceptSound from "../../../static/ready_check_no_focus.wav";
 
 import {
   GameFound,
@@ -17,7 +19,7 @@ import {
   UpdateQueue,
 } from "./messages";
 
-import { exec } from "child_process";
+import {exec} from "child_process";
 
 const isDev = process.env.DEV === "true";
 
@@ -57,13 +59,13 @@ export class Game {
   private socket!: SocketIOClient.Socket;
 
   constructor(
-    private readonly steam: Steam,
-    private readonly settings: Settings
+      private readonly steam: Steam,
+      private readonly settings: Settings
   ) {
     // this.socket = io(isDev ? "ws://localhost:5010" : "ws://5.101.50.140:5010", {
     this.socket = isDev
-      ? io("ws://localhost:5010", { transports: ["websocket"] })
-      : io("ws://5.101.50.140", {
+        ? io("ws://localhost:5010", {transports: ["websocket"]})
+        : io("ws://5.101.50.140", {
           path: "/launcher",
           transports: ["websocket"],
         });
@@ -92,12 +94,40 @@ export class Game {
     this.socket.on(Messages.QUEUE_STATE, this.queueState);
     this.socket.on(Messages.MATCH_FINISHED, this.matchFinished);
     this.socket.on(Messages.MATCH_STATE, this.matchState);
+
+
+    (window as any).dev = {
+      game : {
+        found : (total_count: number, accepted_count: number) => {
+          const gameFound = ({
+            mode: MatchmakingMode.UNRANKED,
+            accepted: accepted_count,
+            roomID: "test_000000",
+            total: total_count
+          } as GameFound)
+
+          this.gameFound(gameFound);
+        },
+        ready : (total_count: number, accepted_count: number) => {
+          const data = ({
+            url: "localhost:0000"
+          } as LauncherServerStarted)
+
+          this.joinGame(data);
+        },
+        finish : () => {
+          this.matchFinished({
+            roomId : "test_000000"
+          })
+        }
+      }
+    }
   }
 
   private matchState = (url?: string) => {
     this.serverURL = url;
   };
-  private matchFinished = ({ roomId }: any) => {
+  private matchFinished = ({roomId}: any) => {
     this.serverURL = undefined;
     this.pendingGame = undefined;
   };
@@ -106,7 +136,7 @@ export class Game {
     this.searchingMode = mode === null ? undefined : mode;
   };
 
-  private roomNotReady = ({ roomID }: any) => {
+  private roomNotReady = ({roomID}: any) => {
     // shit.
     if (roomID === this.pendingGame?.roomID) this.pendingGame = undefined;
   };
@@ -131,15 +161,20 @@ export class Game {
 
     if (this.pendingGame) {
       this.serverURL = data.url;
+      this.playNecessaryAcceptSound();
     }
   };
 
-  public playMatchSound(){
-      (new Audio(matchSound))?.play()
+  public playMatchSound() {
+    (new Audio(matchSound))?.play()
+  }
+
+  public playNecessaryAcceptSound() {
+    (new Audio(necessaryAcceptSound))?.play()
   }
 
   @action
-  private gameFound = ({ mode, total, roomID, accepted }: GameFound) => {
+  private gameFound = ({mode, total, roomID, accepted}: GameFound) => {
     this.pendingGame = {
       mode,
       accepted,
