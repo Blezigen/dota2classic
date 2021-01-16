@@ -56,7 +56,7 @@ export default class Settings {
       console.log("Im lnk")
       // if it is shortcut
       const res = new Promise<ShortcutOptions>((resolve, reject) =>
-        ws.query(this.path_681!!, (error, options) => {
+        ws.query(this.path_681!!, (error, options:any) => {
           if (error) reject(error);
           else resolve(options);
         })
