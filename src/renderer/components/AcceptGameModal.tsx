@@ -90,52 +90,52 @@ const AcceptDots = styled.div`
   margin-top: 40px;
 `;
 const IAcceptGameModal = () => {
-  const { game } = useStores();
+    const {game} = useStores();
 
-  if (game.serverURL)
-      return (
-        <ModalWrapper>
-          <Modal>
-            <GameReady>Игра готова!</GameReady>
-            <Buttons>
-              <Button onClick={() => game.launchGame()}>Подключиться</Button>
-            </Buttons>
-          </Modal>
-        </ModalWrapper>
-      );
-      
-  if (game.pendingGame)
+    if (game.serverURL)
+        return (
+            <ModalWrapper>
+                <Modal>
+                    <GameReady>Игра готова!</GameReady>
+                    <Buttons>
+                        <Button onClick={() => game.launchGame()}>Подключиться</Button>
+                    </Buttons>
+                </Modal>
+            </ModalWrapper>
+        );
+
+    if (!game.pendingGame)
+        return <span/>;
+
     if (!game.pendingGame.iAccepted)
-      return (
-        <ModalWrapper>
-          <Modal>
-            <GameReady>Игра найдена!</GameReady>
-            <Buttons>
-              <Button onClick={game.acceptPendingGame}>Принять</Button>
-              <Button onClick={game.declinePendingGame}>Отклонить</Button>
-            </Buttons>
-          </Modal>
-        </ModalWrapper>
-      );
-    else
-      return (
-        <ModalWrapper>
-          <Modal>
-            <GameReady>Игра найдена!</GameReady>
-            <AcceptDots>
-              {new Array(game.pendingGame.total).fill(null).map((_, t) => (
-                <AcceptDot
-                  key={t}
-                  className={
-                    t < game.pendingGame!!.accepted ? "accepted" : undefined
-                  }
-                />
-              ))}
-            </AcceptDots>
-          </Modal>
-        </ModalWrapper>
-      );
+        return (
+            <ModalWrapper>
+                <Modal>
+                    <GameReady>Игра найдена!</GameReady>
+                    <Buttons>
+                        <Button onClick={game.acceptPendingGame}>Принять</Button>
+                        <Button onClick={game.declinePendingGame}>Отклонить</Button>
+                    </Buttons>
+                </Modal>
+            </ModalWrapper>
+        );
 
-  return <span />;
+    return (
+        <ModalWrapper>
+            <Modal>
+                <GameReady>Ожидаем игроков <br/> {game.pendingGame!!.accepted === undefined ? 0 : game.pendingGame!!.accepted} из {game.pendingGame.total}...</GameReady>
+                <AcceptDots>
+                    {new Array(game.pendingGame.total).fill(null).map((_, t) => (
+                        <AcceptDot
+                            key={t}
+                            className={
+                                t < game.pendingGame!!.accepted ? "accepted" : undefined
+                            }
+                        />
+                    ))}
+                </AcceptDots>
+            </Modal>
+        </ModalWrapper>
+    );
 };
 export const AcceptGameModal = observer(IAcceptGameModal);
